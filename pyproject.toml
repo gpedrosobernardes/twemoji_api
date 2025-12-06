@@ -16,5 +16,8 @@ Issues = "https://github.com/gpedrosobernardes/twemoji_api/issues"
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["twemoji_api"]
+
 [tool.setuptools.package-data]
-your_package = ["assets/**/*"]
+twemoji_api = ["assets/**/*"]

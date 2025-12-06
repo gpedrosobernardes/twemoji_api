@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from twemoji_api.api import get_emoji_file_name, get_emoji_path, Twemoji, get_emoji_url
+from twemoji_api import get_emoji_file_name, get_emoji_path, Twemoji, get_emoji_url
 from emojis.db import get_emoji_by_code
 
 
