@@ -1,2 +1,4 @@
 .idea
 .venv
+twemoji_api.egg-info
+dist
