@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from twemoji_api import get_emoji_file_name, get_emoji_path, Twemoji, get_emoji_url
+from twemoji_api.api import get_emoji_file_name, get_emoji_path, Twemoji, get_emoji_url
 from emojis.db import get_emoji_by_code
 
 
@@ -58,3 +58,8 @@ def test_twemoji_invalid_extension():
 def test_get_emoji_path_invalid_extension():
     with pytest.raises(ValidationError):
         get_emoji_path("😂", "jpeg")
+
+
+def test_duplicate_emoji_error():
+    with pytest.raises(ValidationError):
+        Twemoji("😭😂")

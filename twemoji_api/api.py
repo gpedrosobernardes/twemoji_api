@@ -11,11 +11,7 @@ def get_emoji_path(emoji, extension = "png"):
     else:
         folder = "72x72"
     path = Path(__file__).parent.absolute() / f"assets/{folder}/{file_name}.{extension}"
-    if path.exists():
-        return path
-    else:
-        file_name = "-".join(file_name.split("-")[:-1])
-        return Path(__file__).parent.absolute() / f"assets/{folder}/{file_name}.{extension}"
+    return path
 
 
 def get_emoji_url(emoji, extension = "png"):

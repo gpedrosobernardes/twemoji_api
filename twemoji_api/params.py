@@ -1,5 +1,6 @@
 import typing
 
+import emojis
 from emojis.db import Emoji, get_emoji_by_code
 from pydantic import BaseModel, field_validator
 
@@ -11,11 +12,17 @@ class EmojiParams(BaseModel):
 
     @field_validator("emoji", mode="before")
     def load_emoji(cls, v):
-        # se já for Emoji, deixa como está
         if isinstance(v, Emoji):
             return v
-        # se for código, converte
-        return get_emoji_by_code(v)
+        elif isinstance(v, str):
+            emoji = emojis.get(v)
+            if len(emoji) == 1:
+                emoji = next(iter(emoji))
+                return get_emoji_by_code(emoji)
+            else:
+                raise ValueError("Only one emoji allowed.")
+        else:
+            raise TypeError("Invalid type for emoji.")
 
 
 class ExtensionParams(BaseModel):
