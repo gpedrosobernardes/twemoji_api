@@ -19,7 +19,7 @@ pip install twemoji-api
 ## Usage
 
 ```python
-from twemoji_api import get_emoji_path, get_emoji_url, Twemoji
+from twemoji_api.api import get_emoji_path, get_emoji_url, Twemoji
 
 print(get_emoji_path("🔥"))
 print(get_emoji_url("🔥"))

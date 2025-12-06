@@ -1,6 +1,6 @@
 [project]
 name = "twemoji-api"
-version = "1.0.0"
+version = "1.0.1"
 description = "A lightweight utility for resolving emojis into file names, local asset paths, and URLs."
 authors = [{ name="Gustavo Pedroso Bernardes", email="gpedrosobernardes@gmail.com" }]
 readme = "README.md"
