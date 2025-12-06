@@ -57,7 +57,7 @@ Object-oriented interface providing:
 MIT
 
 
-### Twemoji Attribution
+## Twemoji Attribution
 This project includes graphics from Twemoji.
 Copyright 2019 Twitter, Inc and other contributors.
 Licensed under CC-BY 4.0:

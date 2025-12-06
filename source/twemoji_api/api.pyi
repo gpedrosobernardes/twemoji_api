@@ -7,7 +7,7 @@ from twemoji_api.enum import PhotoType
 from twemoji_api.params import EmojiParams, ExtensionParams
 
 
-def get_emoji_path(emoji: typing.Union[Emoji, str], extension: PhotoType = ...) -> Path:
+def get_emoji_path(emoji: typing.Union[Emoji, str], extension: typing.Union[PhotoType, str] = ...) -> Path:
     """
     Get the path of the given emoji.
     :param emoji: Emoji object
@@ -16,7 +16,7 @@ def get_emoji_path(emoji: typing.Union[Emoji, str], extension: PhotoType = ...) 
     """
     ...
 
-def get_emoji_url(emoji: typing.Union[Emoji, str], extension: PhotoType = ...) -> str:
+def get_emoji_url(emoji: typing.Union[Emoji, str], extension: typing.Union[PhotoType, str] = ...) -> str:
     """
     Get the github url of the given emoji.
     :param emoji: Emoji object
@@ -35,7 +35,7 @@ def get_emoji_file_name(emoji: typing.Union[Emoji, str]) -> str:
 
 
 class Twemoji:
-    def __init__(self, emoji: typing.Union[Emoji, str], extension: PhotoType = ...):
+    def __init__(self, emoji: typing.Union[Emoji, str], extension: typing.Union[PhotoType, str] = ...):
         self.emoji = emoji
         self.extension = extension
 
@@ -49,11 +49,11 @@ class Twemoji:
         self._emoji = emoji_params.emoji
 
     @property
-    def extension(self) -> PhotoType:
+    def extension(self) -> str:
         return self._extension
 
     @extension.setter
-    def extension(self, extension: PhotoType) -> None:
+    def extension(self, extension: typing.Union[PhotoType, str]) -> None:
         ExtensionParams(extension=extension)
         self._extension = extension
 
