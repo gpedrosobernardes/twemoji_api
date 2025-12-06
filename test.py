@@ -63,3 +63,8 @@ def test_get_emoji_path_invalid_extension():
 def test_duplicate_emoji_error():
     with pytest.raises(ValidationError):
         Twemoji("😭😂")
+
+
+def test_empty_twemoji_init():
+    with pytest.raises(ValidationError):
+        Twemoji("")
