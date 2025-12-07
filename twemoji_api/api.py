@@ -1,56 +1,67 @@
 from pathlib import Path
 
 from twemoji_api.params import ExtensionParams, EmojiParams
+from emojis.db.db import EMOJI_DB
 
 
-def get_emoji_path(emoji, extension = "png"):
+def get_extension_folder(extension):
     ExtensionParams(extension=extension)
-    file_name = get_emoji_file_name(emoji)
     if extension == "svg":
         folder = "svg"
     else:
         folder = "72x72"
-    path = Path(__file__).parent.absolute() / f"assets/{folder}/{file_name}.{extension}"
-    return path
+    return Path(__file__).parent.absolute() / f"assets/{folder}"
+
+
+def _build_index():
+    folder = get_extension_folder("png")
+    return dict(map(lambda f: (frozenset(f.stem.split("-")), f.stem), folder.iterdir()))
+
+
+_EMOJI_INDEX = _build_index()
+
+
+def get_emoji_path(emoji, extension = "png"):
+    folder = get_extension_folder(extension)
+    code_points = get_emoji_code_points(emoji)
+    file_name = "-".join(code_points)
+    path = folder / f"{file_name}.{extension}"
+    if path.exists():
+        return path
+    else:
+        other_code_points = get_emoji_code_points_by_similarity(code_points)
+        if other_code_points:
+            path = folder / f"{other_code_points}.{extension}"
+            if path.exists():
+                return path
+        return None
+
+
+def get_emojis_code_points_by_similarity(code_points):
+    target = frozenset(code_points)
+    return frozenset(map(lambda v: v[1], filter(lambda v: v[0].issubset(target), _EMOJI_INDEX.items())))
+
+
+def get_emoji_code_points_by_similarity(code_points):
+    matches = get_emojis_code_points_by_similarity(code_points)
+    return next(iter(matches), None)
 
 
 def get_emoji_url(emoji, extension = "png"):
     path = get_emoji_path(emoji, extension)
+    if path is None:
+        return None
     folder = path.parent.name
-    return f"https://github.com/jdecked/twemoji/blob/main/assets/{folder}/{path.name}"
+    return f"https://raw.githubusercontent.com/twitter/twemoji/master/assets/{folder}/{path.name}"
 
 
-def get_emoji_file_name(emoji):
-    emoji_params = EmojiParams(emoji=emoji)
-    emoji = emoji_params.emoji
-    delimiter = "-"
-    # Convert the string into a list of UTF-16 code units
-    code_units = [ord(char) for char in emoji.emoji]
+def get_emoji_code_points(emoji):
+    params = EmojiParams(emoji=emoji)
+    return [hex(ord(ch)).replace("0x", "") for ch in params.emoji.emoji]
 
-    # Process the code units in pairs (high surrogate + low surrogate)
-    code_points = []
-    i = 0
-    while i < len(code_units):
-        high_surrogate = code_units[i]
-        low_surrogate = code_units[i + 1] if i + 1 < len(code_units) else None
 
-        # Check if the current pair is a valid surrogate pair
-        if 0xD800 <= high_surrogate <= 0xDBFF and 0xDC00 <= low_surrogate <= 0xDFFF:
-            # Calculate the code point
-            code_point = (
-                    ((high_surrogate - 0xD800) << 10)
-                    + (low_surrogate - 0xDC00)
-                    + 0x10000
-            )
-            code_points.append(hex(code_point)[2:])  # Remove the '0x' prefix
-            i += 2  # Move to the next pair
-        else:
-            # If not a surrogate pair, treat it as a regular code point
-            code_points.append(hex(high_surrogate)[2:])
-            i += 1
-
-    # Join the code points with the specified delimiter
-    return delimiter.join(code_points)
+def get_all_emojis(extension = "png"):
+    return list(map(lambda e: Twemoji(e, extension), EMOJI_DB))
 
 
 class Twemoji:
@@ -81,8 +92,8 @@ class Twemoji:
         return get_emoji_path(self.emoji, self.extension)
 
     @property
-    def file_name(self):
-        return get_emoji_file_name(self.emoji)
+    def code_points(self):
+        return get_emoji_code_points(self.emoji)
 
     @property
     def url(self):

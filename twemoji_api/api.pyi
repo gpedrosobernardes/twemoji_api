@@ -1,70 +1,200 @@
-import typing
+from typing import List, FrozenSet, Optional, Union
 from pathlib import Path
 
 from emojis.db import Emoji
-
 from twemoji_api.enum import PhotoType
-from twemoji_api.params import EmojiParams, ExtensionParams
 
 
-def get_emoji_path(emoji: typing.Union[Emoji, str], extension: typing.Union[PhotoType, str] = ...) -> Path:
+def get_extension_folder(extension: Union[str, PhotoType]) -> Path:
     """
-    Get the path of the given emoji.
-    :param emoji: Emoji object
-    :param extension: file extension
-    :return: Emoji path
+    Returns the Twemoji asset folder for the given extension.
+
+    The filenames are identical in PNG and SVG directories;
+    only the folder differs.
+
+    Raises:
+        ValidationError: If the extension value is invalid.
     """
     ...
 
-def get_emoji_url(emoji: typing.Union[Emoji, str], extension: typing.Union[PhotoType, str] = ...) -> str:
+
+def get_emoji_code_points(emoji: Union[str, Emoji]) -> List[str]:
     """
-    Get the github url of the given emoji.
-    :param emoji: Emoji object
-    :param extension: file extension
-    :return: Emoji github url
+    Extract Unicode code points from the given emoji string or Emoji instance.
+
+    Handles:
+        • multi-codepoint emojis
+        • variation selectors
+        • skin-tone modifiers
+        • ZWJ sequences
+
+    Returns lowercase hex code points without the '0x' prefix.
+
+    Raises:
+        ValidationError: If the emoji input is invalid.
     """
+    ...
 
 
-def get_emoji_file_name(emoji: typing.Union[Emoji, str]) -> str:
+def get_emojis_code_points_by_similarity(code_points: List[str]) -> FrozenSet[str]:
     """
-    Get the file name of the given emoji.
-    :param emoji: Emoji object
-    :return: Emoji name
+    Returns all emoji filename stems whose code-point sets intersect
+    with the provided list.
+
+    Used to implement similarity lookups and fallback behavior.
+
+    Does not perform validation on code_points; values are assumed to be
+    valid lowercase hex strings.
+    """
+    ...
+
+
+def get_emoji_code_points_by_similarity(code_points: List[str]) -> Optional[str]:
+    """
+    Returns the best matching emoji filename stem based on similarity.
+
+    Similarity is determined by:
+        • shared code points
+        • prioritization of more specific sequences (longer stems)
+
+    Returns:
+        The matching filename stem, or None if no match is found.
+    """
+    ...
+
+
+def get_emoji_path(
+    emoji: Union[Emoji, str],
+    extension: Union[str, PhotoType] = "png"
+) -> Optional[Path]:
+    """
+    Resolves the local Twemoji asset path for the given emoji.
+
+    Steps:
+        • validate the emoji
+        • derive its Unicode code points
+        • attempt exact filename match
+        • fallback to similarity-based match
+
+    Returns:
+        A Path object, or None if no file exists even after fallback.
+
+    Raises:
+        ValidationError: If the emoji or extension value is invalid.
+    """
+    ...
+
+
+def get_emoji_url(
+    emoji: Union[Emoji, str],
+    extension: Union[str, PhotoType] = "png"
+) -> Optional[str]:
+    """
+    Returns the GitHub raw URL to the corresponding Twemoji asset.
+
+    Returns:
+        A URL string, or None if the local file cannot be resolved.
+
+    Raises:
+        ValidationError: If the emoji or extension value is invalid.
+    """
+    ...
+
+
+def get_all_emojis() -> List["Twemoji"]:
+    """
+    Returns a list of Twemoji objects representing every emoji present
+    in the Twemoji PNG folder.
+
+    All emojis in the Twemoji database are assumed valid; therefore no
+    ValidationError is expected.
     """
     ...
 
 
 class Twemoji:
-    def __init__(self, emoji: typing.Union[Emoji, str], extension: typing.Union[PhotoType, str] = ...):
-        self.emoji = emoji
-        self.extension = extension
+    """
+    High-level wrapper for emoji metadata and Twemoji asset resolution.
+
+    Provides:
+        • validated emoji object
+        • Unicode code points
+        • local asset path lookup
+        • GitHub asset URL
+    """
+
+    _emoji: Emoji
+    _extension: str
+
+    def __init__(
+        self,
+        emoji: Union[Emoji, str],
+        extension: Union[str, PhotoType] = "png"
+    ) -> None:
+        """
+        Initializes a Twemoji object with validated values.
+
+        Raises:
+            ValidationError: If the emoji or extension are invalid.
+        """
+        ...
 
     @property
     def emoji(self) -> Emoji:
-        return self._emoji
+        """Returns the validated Emoji instance."""
+        ...
 
     @emoji.setter
-    def emoji(self, emoji: typing.Union[Emoji, str]) -> None:
-        emoji_params = EmojiParams(emoji=emoji)
-        self._emoji = emoji_params.emoji
+    def emoji(self, emoji: Union[Emoji, str]) -> None:
+        """
+        Sets and validates the emoji.
+
+        Raises:
+            ValidationError: If the value is not a valid emoji.
+        """
+        ...
 
     @property
     def extension(self) -> str:
-        return self._extension
+        """Returns the resolved extension ('png' or 'svg')."""
+        ...
 
     @extension.setter
-    def extension(self, extension: typing.Union[PhotoType, str]) -> None:
-        ExtensionParams(extension=extension)
-        self._extension = extension
+    def extension(self, extension: Union[str, PhotoType]) -> None:
+        """
+        Sets and validates the extension.
+
+        Raises:
+            ValidationError: If the extension is invalid.
+        """
+        ...
 
     @property
-    def path(self) -> Path:
-        return get_emoji_path(self.emoji, self.extension)
+    def code_points(self) -> List[str]:
+        """
+        Returns the emoji's Unicode code points.
+
+        Raises:
+            ValidationError: If the internal emoji is invalid (should not occur).
+        """
+        ...
 
     @property
-    def file_name(self) -> str:
-        return get_emoji_file_name(self.emoji)
+    def path(self) -> Optional[Path]:
+        """
+        Local asset path, including fallback via similarity.
+
+        Returns:
+            A Path object or None.
+        """
+        ...
 
     @property
-    def url(self) -> str:
-        return get_emoji_url(self.emoji, self.extension)
+    def url(self) -> Optional[str]:
+        """
+        GitHub raw URL to the Twemoji asset.
+
+        Returns:
+            A URL string or None.
+        """
+        ...
