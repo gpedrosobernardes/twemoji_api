@@ -1,50 +1,62 @@
 from pathlib import Path
-
-from twemoji_api.params import ExtensionParams, EmojiParams
-from emojis.db.db import EMOJI_DB
+from emoji_data_python import char_to_unified
 
 
-def get_extension_folder(extension):
-    ExtensionParams(extension=extension)
+def get_extension_folder(extension: str):
     if extension == "svg":
         folder = "svg"
-    else:
+    elif extension == "png":
         folder = "72x72"
+    else:
+        raise ValueError("Invalid extension.")
     return Path(__file__).parent.absolute() / f"assets/{folder}"
 
 
-def _build_index():
-    folder = get_extension_folder("png")
-    return dict(map(lambda f: (frozenset(f.stem.split("-")), f.stem), folder.iterdir()))
-
-
-_EMOJI_INDEX = _build_index()
-
-
-def get_emoji_path(emoji, extension = "png"):
-    folder = get_extension_folder(extension)
-    code_points = get_emoji_code_points(emoji)
-    file_name = "-".join(code_points)
-    path = folder / f"{file_name}.{extension}"
+def _get_path_from_unified(folder: Path, unified: str, extension: str):
+    # 1. Try exact match
+    path = folder / f"{unified}.{extension}"
     if path.exists():
         return path
+
+    # 2. Try removing leading zeros
+    parts = unified.split("-")
+    unified_no_zeros = "-".join([p.lstrip("0") if p != "0" else "0" for p in parts])
+    path = folder / f"{unified_no_zeros}.{extension}"
+    if path.exists():
+        return path
+
+    # 3. Fallback: remove variation selectors (fe0f)
+    if "fe0f" in parts:
+        parts_no_vs = [p for p in parts if p != "fe0f"]
+        unified_no_vs = "-".join(parts_no_vs)
+        # Try both with and without zeros for the version without VS
+        res = _get_path_from_unified(folder, unified_no_vs, extension)
+        if res:
+            return res
+
+    # 4. Aggressive fallback: for ZWJ sequences, try the base emoji
+    if "200d" in parts:
+        # Try taking components from left to right
+        for i in range(len(parts) - 1, 0, -1):
+            if parts[i] == "200d":
+                base_unified = "-".join(parts[:i])
+                res = _get_path_from_unified(folder, base_unified, extension)
+                if res:
+                    return res
+
+    return None
+
+
+def get_emoji_path(emoji: str, extension: str = "png"):
+    folder = get_extension_folder(extension)
+    unified = char_to_unified(emoji).lower()
+    
+    path = _get_path_from_unified(folder, unified, extension)
+
+    if path:
+        return path
     else:
-        other_code_points = get_emoji_code_points_by_similarity(code_points)
-        if other_code_points:
-            path = folder / f"{other_code_points}.{extension}"
-            if path.exists():
-                return path
-        return None
-
-
-def get_emojis_code_points_by_similarity(code_points):
-    target = frozenset(code_points)
-    return frozenset(map(lambda v: v[1], filter(lambda v: v[0].issubset(target), _EMOJI_INDEX.items())))
-
-
-def get_emoji_code_points_by_similarity(code_points):
-    matches = get_emojis_code_points_by_similarity(code_points)
-    return next(iter(matches), None)
+        raise ValueError("Emoji not found.")
 
 
 def get_emoji_url(emoji, extension = "png"):
@@ -52,49 +64,4 @@ def get_emoji_url(emoji, extension = "png"):
     if path is None:
         return None
     folder = path.parent.name
-    return f"https://raw.githubusercontent.com/twitter/twemoji/master/assets/{folder}/{path.name}"
-
-
-def get_emoji_code_points(emoji):
-    params = EmojiParams(emoji=emoji)
-    return [hex(ord(ch)).replace("0x", "") for ch in params.emoji.emoji]
-
-
-def get_all_emojis(extension = "png"):
-    return list(map(lambda e: Twemoji(e, extension), EMOJI_DB))
-
-
-class Twemoji:
-    def __init__(self, emoji, extension = 'png'):
-        self.emoji = emoji
-        self.extension = extension
-
-    @property
-    def emoji(self):
-        return self._emoji
-
-    @emoji.setter
-    def emoji(self, emoji):
-        emoji_params = EmojiParams(emoji=emoji)
-        self._emoji = emoji_params.emoji
-
-    @property
-    def extension(self):
-        return self._extension
-
-    @extension.setter
-    def extension(self, extension):
-        ExtensionParams(extension=extension)
-        self._extension = extension
-
-    @property
-    def path(self):
-        return get_emoji_path(self.emoji, self.extension)
-
-    @property
-    def code_points(self):
-        return get_emoji_code_points(self.emoji)
-
-    @property
-    def url(self):
-        return get_emoji_url(self.emoji, self.extension)
+    return f"https://raw.githubusercontent.com/jdecked/twemoji/master/assets/{folder}/{path.name}"

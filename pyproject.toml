@@ -1,11 +1,11 @@
 [project]
 name = "twemoji-api"
-version = "1.0.2"
+version = "2.0.0"
 description = "A lightweight utility for resolving emojis into file names, local asset paths, and URLs."
 authors = [{ name="Gustavo Pedroso Bernardes", email="gpedrosobernardes@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.8"
-dependencies = ["pydantic", "emojis"]
+requires-python = ">=3.9"
+dependencies = ["emoji-data-python"]
 
 [project.urls]
 Homepage = "https://github.com/gpedrosobernardes/twemoji_api"
